@@ -7,6 +7,8 @@
 #include <rtos/atomic.h>
 #include <sof/audio/audio_stream.h>
 #include <sof/audio/buffer.h>
+#include <sof/audio/component.h>
+#include <sof/audio/mic_privacy_manager.h>
 #include <rtos/alloc.h>
 #include <rtos/cache.h>
 #include <sof/lib/dma.h>
@@ -19,6 +21,8 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <module/module/base.h>
+#include "../audio/copier/copier.h"
 
 LOG_MODULE_REGISTER(dma, CONFIG_SOF_LOG_LEVEL);
 
@@ -379,7 +383,7 @@ int dma_buffer_copy_to(struct comp_buffer *source,
 	return ret;
 }
 
-int dma_buffer_copy_from_no_consume(struct comp_buffer *source,
+int dma_buffer_copy_from_no_consume(struct comp_dev *dev, struct comp_buffer *source,
 				    struct comp_buffer *sink,
 				    dma_process_func process, uint32_t source_bytes)
 {
@@ -392,6 +396,14 @@ int dma_buffer_copy_from_no_consume(struct comp_buffer *source,
 
 	/* process data */
 	ret = process(istream, 0, &sink->stream, 0, samples);
+
+	struct processing_module *mod = comp_get_drvdata(dev);
+	struct copier_data *cd = module_get_private_data(mod);
+
+	if(cd->mic_priv) {
+
+		mic_privacy_process(cd->mic_priv, sink, samples);
+	}
 
 	buffer_stream_writeback(sink, sink_bytes);
 

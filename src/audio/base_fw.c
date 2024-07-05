@@ -23,6 +23,7 @@
 #include <sof/schedule/dp_schedule.h>
 #include <sof/schedule/ll_schedule.h>
 #include <sof/debug/telemetry/telemetry.h>
+#include <sof/audio/mic_privacy_manager.h>
 /* FIXME:
  * Builds for some platforms like tgl fail because their defines related to memory windows are
  * already defined somewhere else. Remove this ifdef after it's cleaned up
@@ -49,6 +50,7 @@ static int basefw_config(uint32_t *data_offset, char *data)
 	uint16_t version[4] = {SOF_MAJOR, SOF_MINOR, SOF_MICRO, SOF_BUILD};
 	struct sof_tlv *tuple = (struct sof_tlv *)data;
 	struct ipc4_scheduler_config sche_cfg;
+	struct privacy_capabilities priv_caps;
 	uint32_t plat_data_offset = 0;
 	uint32_t log_bytes_size = 0;
 
@@ -119,6 +121,16 @@ static int basefw_config(uint32_t *data_offset, char *data)
 			     IS_ENABLED(CONFIG_ADSP_IMR_CONTEXT_SAVE));
 
 	tuple = tlv_next(tuple);
+
+
+	priv_caps.privacy_version = 1;
+	priv_caps.capabilities_length = 1;
+	priv_caps.capabilities[0] = mic_privacy_get_policy_register();
+
+	tlv_value_set(tuple, IPC4_PRIVACY_CAPS_HW_CFG, sizeof(priv_caps), &priv_caps);
+
+	tuple = tlv_next(tuple);
+
 
 	/* add platform specific tuples */
 	basefw_vendor_fw_config(&plat_data_offset, (char *)tuple);
