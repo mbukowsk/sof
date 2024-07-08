@@ -275,6 +275,15 @@ static int basefw_resource_allocation_request(bool first_block,
 	}
 }
 
+static int basefw_set_mic_priv_policy(bool first_block,
+					bool last_block,
+					uint32_t data_offset_or_size,
+					const char *data)
+{
+	tr_info(&basefw_comp_tr, "basefw_set_mic_priv_policy");
+	return 0;
+}
+
 static int basefw_power_state_info_get(uint32_t *data_offset, char *data)
 {
 	struct sof_tlv *tuple = (struct sof_tlv *)data;
@@ -515,6 +524,8 @@ static int basefw_set_large_config(struct comp_dev *dev,
 	case IPC4_RESOURCE_ALLOCATION_REQUEST:
 		return basefw_resource_allocation_request(first_block, last_block, data_offset,
 							  data);
+	case IPC4_SET_MIC_PRIVACY_FW_MANAGED_POLICY_MASK:
+		return basefw_set_mic_priv_policy(first_block, last_block, data_offset, data);
 	default:
 		break;
 	}
